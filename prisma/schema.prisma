@@ -1,0 +1,46 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// A Room is the social wrapper around a Panta market.
+// The market itself lives in Panta's catalog (marketId = event PDA).
+// demo=true marks rooms created in DEMO MODE (no real Panta market).
+model Room {
+  id          String   @id @default(cuid())
+  marketId    String   @unique // Panta marketId; for demo rooms: "demo:<cuid>"
+  category    String   @default("other")
+  title       String
+  description String?
+  imageUrl    String?
+  creatorName String   @default("Anonymous")
+  creatorWallet String?
+  demo        Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  comments    Comment[]
+}
+
+model Comment {
+  id          String   @id @default(cuid())
+  roomId      String
+  room        Room     @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  wallet      String? // commenter wallet (live) or null (demo/guest)
+  displayName String   @default("Guest")
+  body        String
+  createdAt   DateTime @default(now())
+  reactions   Reaction[]
+}
+
+model Reaction {
+  id        String  @id @default(cuid())
+  commentId String
+  comment   Comment @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  emoji     String
+  wallet    String
+  @@unique([commentId, wallet, emoji])
+}

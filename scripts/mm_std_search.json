@@ -1,0 +1,29 @@
+[
+  {
+    "url": "https://docs.metamask.io",
+    "name": "MetaMask Connect Solana methods",
+    "snippet": "Aug 19, 2026 — By default, the wallet is automatically registered with the Wallet Standard registry on creation, making MetaMask discoverable by Solana dapps ... Read more",
+    "host_name": "docs.metamask.io",
+    "rank": 0,
+    "date": "Aug 19, 2026",
+    "favicon": ""
+  },
+  {
+    "url": "https://solana.com",
+    "name": "Solana Wallets: Compare Features & Platforms",
+    "snippet": "Sep 2, 2026 — Connect Wallet Standard wallets in your frontend, or choose production signing infrastructure for embedded, managed, and institutional wallet ... Read more",
+    "host_name": "solana.com",
+    "rank": 1,
+    "date": "Sep 2, 2026",
+    "favicon": ""
+  },
+  {
+    "url": "https://github.com",
+    "name": "MetaMask/connect-monorepo",
+    "snippet": "Provides a Wallet Standard compatible wallet , so it integrates with the Solana wallet ... npm, MetaMask Connect Solana adapter — Wallet Standard integration over ... Read more",
+    "host_name": "github.com",
+    "rank": 2,
+    "date": "",
+    "favicon": ""
+  }
+]
