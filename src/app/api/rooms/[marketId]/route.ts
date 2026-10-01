@@ -4,7 +4,7 @@ import { getMarket, getMarketTrades } from "@/server/panta/markets";
 import { PantaError, isPantaConfigured } from "@/server/panta/client";
 import { resolveMode, pantaEnvFor } from "@/server/request-mode";
 import { demoCard, demoTape } from "@/server/panta/demo";
-import type { CardView } from "@/server/panta/normalize";
+import { isStrippedCard, type CardView } from "@/server/panta/normalize";
 
 export const dynamic = "force-dynamic";
 
@@ -58,7 +58,9 @@ export async function GET(req: NextRequest, ctx: { params: Promise<{ marketId: s
   } else {
     try {
       if (!isPantaConfigured()) throw new PantaError("PANTA_UNREACHABLE", "Panta key not configured", 503);
-      market = await getMarket(marketId, pantaEnv);
+      // Shape-flip resilience: re-roll stripped detail answers (deadline keeps
+      // the room open well inside serverless time limits).
+      market = await getMarket(marketId, pantaEnv, { stripRetries: 2, deadline: Date.now() + 3_000 });
       try {
         tape = await getMarketTrades(marketId, 20, pantaEnv);
       } catch (e) {
@@ -129,6 +131,21 @@ export async function GET(req: NextRequest, ctx: { params: Promise<{ marketId: s
         imageUrl: market.image,
         creatorName: isDemoId ? "Demo" : shortAddr(market.creatorAddress ?? "Panta"),
         demo,
+      },
+      include: { _count: { select: { comments: true } } },
+    });
+  }
+
+  // Heal fallback titles: rooms registered before title enrichment carried the
+  // "Market <id>…" id-label. Once a live read yields the real question, upgrade
+  // the local record (and backfill the cover image if missing).
+  if (market && !demo && finalRoom && isStrippedCard({ title: finalRoom.title }) && !isStrippedCard(market)) {
+    finalRoom = await db.room.update({
+      where: { marketId },
+      data: {
+        title: market.title,
+        ...(market.description ? { description: market.description } : {}),
+        ...(market.image && !finalRoom.imageUrl ? { imageUrl: market.image } : {}),
       },
       include: { _count: { select: { comments: true } } },
     });

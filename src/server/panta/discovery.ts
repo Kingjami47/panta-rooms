@@ -1,7 +1,7 @@
 /** Market discovery — list + categories (GET /markets/, GET /categories/). */
 import { pantaCall, activeEnv, type PantaEnv } from "./client";
 import type { CategoriesResponse, MarketListRow } from "./types";
-import { toCardView, type CardView } from "./normalize";
+import { toCardView, isStrippedCard, type CardView } from "./normalize";
 import { getMarket } from "./markets";
 
 export interface ListParams {
@@ -55,9 +55,11 @@ export async function listMarketsRaw(
  * Third-party audit (2026-09-27, github.com/bisale24-ops/settlement-check):
  * Panta's detail endpoint answers in TWO shapes — complete cards (with
  * question/resolutionRule) and "stripped" cards missing those fields, and a
- * card can flip shapes between reads. A stripped answer is therefore cached
- * only briefly (thin cache) so the next enrich pass can pick up the complete
- * shape, instead of pinning the stripped one for the full TTL.
+ * card can flip shapes between reads (re-verified 2026-10-01: same market,
+ * same IP, seconds apart — complete → complete → stripped). getMarket now
+ * re-rolls stripped answers within the same call (stripRetries, deadline-
+ * bounded), so a thin cache entry means every replica dice-roll failed, not
+ * just one; it is cached briefly (thin cache) and retried on a later pass.
  */
 const detailCache = new Map<string, { at: number; card: CardView; ttl: number }>();
 const failCache = new Map<string, { at: number }>();
@@ -98,8 +100,7 @@ function recordDetailFailure(): void {
 }
 
 function needsEnrichment(card: CardView): boolean {
-  const t = (card.title || "").trim();
-  return !t || card.title.startsWith("Market ");
+  return isStrippedCard(card);
 }
 
 function sleep(ms: number): Promise<void> {
@@ -126,6 +127,9 @@ async function enrichCards(cards: CardView[], env: PantaEnv): Promise<CardView[]
   const missing = cards.filter(needsEnrichment);
   if (!missing.length) return cards;
 
+  // In-pass shape-flip retries share the enrichment budget: keep ~1.5 s of
+  // headroom under ENRICH_BUDGET_MS for first reads still in flight.
+  const passDeadline = Date.now() + ENRICH_BUDGET_MS - 1_500;
   const results = await pooled(missing.slice(0, MAX_ENRICH), POOL_SIZE, async (c) => {
     const hit = detailCache.get(c.marketId);
     if (hit && Date.now() - hit.at < hit.ttl) return hit.card;
@@ -133,7 +137,7 @@ async function enrichCards(cards: CardView[], env: PantaEnv): Promise<CardView[]
     if (fail && Date.now() - fail.at < FAIL_TTL) return null;
     await sleep(Math.random() * JITTER_MS);
     try {
-      const card = await getMarket(c.marketId, env);
+      const card = await getMarket(c.marketId, env, { stripRetries: 2, deadline: passDeadline });
       // Complete answer (real question text) → full TTL. A detail that still
       // carries only the id-label fallback means a stripped card — cache it
       // briefly so a later read can upgrade to the complete shape.

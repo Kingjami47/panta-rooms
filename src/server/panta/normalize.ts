@@ -65,6 +65,17 @@ export function priceCents(v: string | number | null | undefined): number | null
   return Math.round(n * 100);
 }
 
+/**
+ * A card is "stripped" when it carries no usable question text — either Panta's
+ * stripped detail shape (title:"") or our id-label fallback ("Market <id>…").
+ * Shared by the discovery feed (needs-enrichment test) and the shape-flip
+ * retry in markets.getMarket.
+ */
+export function isStrippedCard(card: Pick<CardView, "title">): boolean {
+  const t = (card.title || "").trim();
+  return !t || t.startsWith("Market ");
+}
+
 export interface CardView {
   marketId: string;
   title: string;
