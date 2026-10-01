@@ -64,11 +64,18 @@ export async function listMarketsRaw(
 const detailCache = new Map<string, { at: number; card: CardView; ttl: number }>();
 const failCache = new Map<string, { at: number }>();
 const DETAIL_TTL = 1_800_000;
-/** Stripped-card thin cache — re-check soon in case the shape flips. */
-const THIN_TTL = 300_000;
-const FAIL_TTL = 900_000;
+/** Stripped-card thin cache — re-check soon in case the shape flips.
+ *  Detail reads cost ~3 s each (live 2026-10-01), so the in-pass re-roll can
+ *  rarely fit a second attempt inside the enrich budget; the thin TTL is the
+ *  main upgrade path and must be short (5 min kept pages stripped). */
+const THIN_TTL = 60_000;
+const FAIL_TTL = 180_000;
 const MAX_ENRICH = 8;
-const POOL_SIZE = 2;
+/** Pool 4: detail calls are ~3 s and succeed reliably since the Cloudflare
+ *  ban lifted (live 2026-10-01); pool 2 fit only ~4 reads per rebuild, so
+ *  pages gained just a couple of real titles per window. 4 workers × 6 s
+ *  budget ≈ 8 reads/rebuild — a page fills within one or two windows. */
+const POOL_SIZE = 4;
 const JITTER_MS = 600;
 /** Enrichment time budget — a slow/blocked upstream must never push the feed
  *  request past the serverless function timeout. Completed details stay cached

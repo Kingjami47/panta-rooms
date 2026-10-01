@@ -9,13 +9,16 @@ export const dynamic = "force-dynamic";
 
 /** In-memory cache for the discovery feed. Panta's listing returns a different
  *  slice on every read (audit 2026-09-27), so a longer window keeps the visible
- *  grid stable for users instead of reshuffling every page view. */
+ *  grid stable for users instead of reshuffling every page view. 90 s: short
+ *  enough that progressive enrichment fills the page within a couple of
+ *  windows (each rebuild re-rolls previously-stripped cards), long enough to
+ *  stay stable while a user is looking at it. */
 interface CacheEntry {
   at: number;
   data: unknown;
 }
 const cache = new Map<string, CacheEntry>();
-const TTL = 180_000;
+const TTL = 90_000;
 
 interface FeedCard {
   marketId: string;
