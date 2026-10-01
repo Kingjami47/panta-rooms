@@ -15,9 +15,13 @@ export function toUnix(value: number | string | null | undefined): number | null
   return Number.isNaN(t) ? null : Math.floor(t / 1000);
 }
 
-export function displayTitle(row: Pick<MarketListRow, "title" | "description" | "marketId">): string {
+export function displayTitle(row: Pick<MarketListRow, "title" | "description" | "marketId"> & { question?: string }): string {
   const t = (row.title || "").trim();
   if (t) return t;
+  // Detail rows carry a dedicated `question` field (verified 2026-09-27) that is
+  // populated even when title is "" — use it before falling back further.
+  const q = (row.question || "").trim();
+  if (q) return q;
   const d = (row.description || "").trim();
   if (d) return d;
   return `Market ${row.marketId.slice(0, 8)}…`;
@@ -77,6 +81,8 @@ export interface CardView {
   resolutionTime: number | null;
   creatorAddress: string | null;
   resolutionRule: string | null;
+  /** Explicitly false only when Panta's card says so — absent/null = unknown. */
+  onChain?: boolean | null;
 }
 
 export function toCardView(row: MarketDetail): CardView {
@@ -106,5 +112,6 @@ export function toCardView(row: MarketDetail): CardView {
     resolutionTime: toUnix(row.resolutionTime),
     creatorAddress: (row as MarketDetail).creatorAddress ?? null,
     resolutionRule: (row as MarketDetail).resolutionRule ?? null,
+    onChain: typeof row.onChain === "boolean" ? row.onChain : null,
   };
 }

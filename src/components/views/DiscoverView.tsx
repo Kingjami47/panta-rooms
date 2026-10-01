@@ -25,6 +25,14 @@ function MarketCard({ card }: { card: FeedCard }) {
             DEMO
           </span>
         )}
+        {card.onChain === false && (
+          <span
+            className="rounded-full border border-orange-400/30 bg-orange-400/10 px-2 py-0.5 text-[10px] font-semibold tracking-wide text-orange-300"
+            title="Panta lists this market, but it has no Solana account — it can be discussed here, not traded."
+          >
+            Not on-chain
+          </span>
+        )}
       </div>
       <h3 className="mt-3.5 line-clamp-2 text-[15.5px] font-semibold leading-snug text-zinc-100">{card.title}</h3>
       <div className="mt-4">
@@ -32,7 +40,9 @@ function MarketCard({ card }: { card: FeedCard }) {
       </div>
       <div className="mt-4 flex items-center justify-between text-[12.5px] text-zinc-500">
         <span>
-          {card.volumeUsdc ? <>{card.volumeUsdc} USDC volume</> : "No volume yet"}
+          {/* Panta's volume fields come and go between calls (audit 2026-09-27) —
+              render a number only when one actually arrived. */}
+          {Number(card.volumeUsdc) > 0 ? <>{card.volumeUsdc} USDC volume</> : "No volume reported"}
         </span>
         <span>{card.resolved ? "Resolved" : daysLeft(card.endTime) || timeAgo(card.endTime)}</span>
       </div>
@@ -75,7 +85,9 @@ export function DiscoverView() {
       <div className="mb-8">
         <h1 className="text-2xl font-bold tracking-tight text-zinc-100 sm:text-3xl">Explore Rooms</h1>
         <p className="mt-2 text-[14px] text-zinc-400">
-          Live Panta markets, each with a Room for discussion, trading and sharing.
+          {data?.demo
+            ? "Sample markets in DEMO MODE — browse, discuss, create and trade with zero setup. Nothing here is real."
+            : "Live Panta markets, each with a Room for discussion, trading and sharing."}
         </p>
       </div>
 
@@ -141,7 +153,13 @@ export function DiscoverView() {
       ) : filtered.length === 0 ? (
         <EmptyState
           title={query ? "No matches" : "No markets found"}
-          body={query ? "Try a different search term or clear the filters." : "Panta's catalog has no markets for this filter yet. Create the first one!"}
+          body={
+            query
+              ? "Try a different search term or clear the filters."
+              : data?.demo
+                ? "No sample markets for this filter in demo mode. Try another category — or switch the environment to Live to browse Panta's real catalog."
+                : "Panta's catalog has no markets for this filter yet. Create the first one!"
+          }
         />
       ) : (
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">

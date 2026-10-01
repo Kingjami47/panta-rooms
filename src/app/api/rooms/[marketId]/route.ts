@@ -49,7 +49,7 @@ export async function GET(req: NextRequest, ctx: { params: Promise<{ marketId: s
           endTime: null,
           resolutionTime: null,
           creatorAddress: null,
-          resolutionRule: "DEMO MODE — simulated market. Connect Panta credentials to create real markets.",
+          resolutionRule: "DEMO MODE — simulated market. Switch the environment to Live to create real markets.",
         };
       } else {
         return NextResponse.json({ code: "ROOM_NOT_FOUND", message: "Demo market not found" }, { status: 404 });
@@ -75,10 +75,37 @@ export async function GET(req: NextRequest, ctx: { params: Promise<{ marketId: s
           { status: 404 }
         );
       }
-      // Unreachable / timeout → demo fallback with honest notice.
-      demo = true;
-      market = null;
-      notice = "Live Panta data is unavailable right now — showing DEMO DATA instead.";
+      // Unreachable / timeout → honest fallback. If a local Room exists for this
+      // market, synthesize its market view from the Room record (clearly labeled
+      // DEMO) so discussion still works; otherwise say the data is unavailable.
+      const localRoom = await db.room.findUnique({ where: { marketId } });
+      if (localRoom) {
+        demo = true;
+        tape = localRoom.demo ? demoTape(marketId) : [];
+        market = {
+          marketId,
+          title: localRoom.title,
+          description: localRoom.description,
+          category: localRoom.category,
+          phase: "primary",
+          resolved: false,
+          outcome: null,
+          yesCents: 50,
+          noCents: 50,
+          volumeUsdc: "0",
+          image: localRoom.imageUrl,
+          endTime: null,
+          resolutionTime: null,
+          creatorAddress: null,
+          resolutionRule:
+            "Live Panta data is temporarily unavailable — showing the Room's local record (DEMO) instead.",
+        };
+        notice = "Live Panta data is temporarily unavailable — showing this Room with clearly-labeled sample data.";
+      } else {
+        demo = true;
+        market = null;
+        notice = "Live Panta data is unavailable right now.";
+      }
     }
   }
 

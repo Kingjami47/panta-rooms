@@ -185,9 +185,13 @@ export function ActivityView() {
             ) : positions.length === 0 ? (
               <div className="pr-card px-6 py-10 text-center">
                 <p className="text-[14px] text-zinc-300">No positions yet</p>
-                <p className="mt-1 text-[12.5px] text-zinc-500">
-                  Trades you make in Rooms appear here. Newly confirmed trades may take a minute to index.
-                </p>
+                {data?.note ? (
+                  <p className="mt-1 text-[12.5px] leading-relaxed text-zinc-500">{data.note}</p>
+                ) : (
+                  <p className="mt-1 text-[12.5px] text-zinc-500">
+                    Trades you make in Rooms appear here. Newly confirmed trades may take a minute to index.
+                  </p>
+                )}
               </div>
             ) : (
               <div className="space-y-3.5">

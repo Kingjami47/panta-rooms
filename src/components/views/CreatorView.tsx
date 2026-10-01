@@ -11,6 +11,7 @@ import { useWallet } from "@solana/wallet-adapter-react";
 import { ArrowRight } from "lucide-react";
 import { fetchMyRooms } from "@/lib/api-client";
 import { pantaProxy } from "@/lib/api-client";
+import { useAppMode } from "@/components/wallet/funding-center";
 import { useAppStore } from "@/store/app-store";
 import { CategoryPill, SectionTitle } from "@/components/shared/ui-bits";
 
@@ -26,6 +27,7 @@ interface MyCreatedMarket {
 
 export function CreatorView() {
   const { publicKey, connected } = useWallet();
+  const { mode } = useAppMode();
   const navigate = useAppStore((s) => s.navigate);
   const wallet = publicKey?.toBase58() ?? null;
 
@@ -34,10 +36,13 @@ export function CreatorView() {
     queryFn: () => fetchMyRooms(wallet),
   });
 
+  // createdBy=me is a live Panta read — skipped entirely in DEMO mode (no Panta
+  // calls, no live leakage). Demo Rooms are listed under "My Rooms" below.
   const { data: created, isLoading: createdLoading } = useQuery({
     queryKey: ["panta-created"],
     queryFn: () =>
       pantaProxy<{ items: MyCreatedMarket[]; nextCursor: string | null }>("markets/?createdBy=me&limit=20"),
+    enabled: mode !== "demo",
     retry: false,
   });
 
@@ -49,10 +54,21 @@ export function CreatorView() {
     <div className="mx-auto w-full max-w-4xl px-4 pb-24 pt-10 sm:px-6">
       <h1 className="text-2xl font-bold tracking-tight text-zinc-100 sm:text-3xl">Creator</h1>
       <p className="mt-2 text-[14px] text-zinc-400">
-        Markets you created and the Rooms around them. Metrics come only from Panta and real app activity.
+        {mode === "demo"
+          ? "Demo mode — your sample Rooms are listed below. Switch the environment to Live to create real markets."
+          : "Markets you created and the Rooms around them. Metrics come only from Panta and real app activity."}
       </p>
 
       {/* Markets created via this app's Panta account */}
+      {mode === "demo" ? (
+        <div className="mt-10">
+          <SectionTitle>Markets created with this API account</SectionTitle>
+          <div className="pr-card px-6 py-6 text-[13px] leading-relaxed text-zinc-500">
+            Skipped in DEMO MODE — this list reads from the live Panta API, and demo mode never calls Panta. Rooms you
+            create in demo mode appear under <span className="font-medium text-zinc-300">My Rooms</span> below.
+          </div>
+        </div>
+      ) : (
       <div className="mt-10">
         <SectionTitle hint="createdBy=me via the Panta API">Markets created with this API account</SectionTitle>
         {createdLoading ? (
@@ -77,6 +93,7 @@ export function CreatorView() {
           </div>
         )}
       </div>
+      )}
 
       {/* My rooms */}
       <div className="mt-10">

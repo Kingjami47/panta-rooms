@@ -16,6 +16,8 @@ export interface FeedCard {
   resolutionTime: number | null;
   creatorAddress: string | null;
   resolutionRule: string | null;
+  /** Explicitly false only when Panta's card says so — absent/null = unknown. */
+  onChain?: boolean | null;
   demo: boolean;
   hasRoom: boolean;
   commentCount: number;

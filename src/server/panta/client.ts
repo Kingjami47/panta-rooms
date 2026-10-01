@@ -153,6 +153,11 @@ export async function pantaCall<T = unknown>(path: string, opts: PantaCallOption
       const headers: Record<string, string> = {
         "X-Api-Key": key,
         Accept: "application/json",
+        // Honest, distinctive UA. Cloudflare in front of live-api.panta.market
+        // bans default tool signatures (curl/python/node) with Error 1010
+        // "browser signature banned" — an identifiable product UA avoids the
+        // generic-bot blocklist while staying truthfully attributable.
+        "User-Agent": "PantaRooms/1.0 (+https://panta-rooms.vercel.app)",
       };
       if (userId) headers["X-User-Id"] = userId;
       if (body !== undefined) headers["Content-Type"] = "application/json";

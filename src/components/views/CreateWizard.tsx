@@ -171,6 +171,7 @@ export function CreateWizard() {
           category: proposal.category,
           imageUrl: LOCAL_COVER(proposal.category),
           creatorName: "Demo creator",
+          creatorWallet: publicKey?.toBase58() ?? null,
           demo: true,
         });
         setCreate({ phase: "done", marketId, demoTxId: res.demoTxId });
@@ -204,20 +205,29 @@ export function CreateWizard() {
         imageUrl: coverUrl(proposal.category),
         region: "Global",
       };
-      let quote: CreateQuoteResponse;
-      try {
-        quote = await pantaProxy<CreateQuoteResponse>("markets/create/quote/", quoteBody);
-      } catch (e) {
-        // Panta's quote occasionally transient-fails on its server-side image
-        // soft-check ("unexpected create quote failure"). One silent retry —
-        // verified 2026-09-22 that the identical payload succeeds.
-        if (e instanceof ApiError && e.transient) {
-          await new Promise((r) => setTimeout(r, 1200));
-          quote = await pantaProxy<CreateQuoteResponse>("markets/create/quote/", quoteBody);
-        } else {
+      const fetchQuote = async (): Promise<CreateQuoteResponse> => {
+        try {
+          return await pantaProxy<CreateQuoteResponse>("markets/create/quote/", quoteBody);
+        } catch (e) {
+          // Panta's quote endpoint intermittently rejects VALID drafts with the
+          // generic "unexpected create quote failure" (third-party audit
+          // 2026-09-27 measured 19 of 20 identical quotes failing, with the
+          // identical payload succeeding on some attempts). Retry up to twice
+          // with growing backoff before giving up.
+          if (e instanceof ApiError && e.transient) {
+            for (const delay of [1200, 2500]) {
+              await new Promise((r) => setTimeout(r, delay));
+              try {
+                return await pantaProxy<CreateQuoteResponse>("markets/create/quote/", quoteBody);
+              } catch (e2) {
+                if (!(e2 instanceof ApiError && e2.transient)) throw e2;
+              }
+            }
+          }
           throw e;
         }
-      }
+      };
+      const quote = await fetchQuote();
       setCreate({
         phase: "quoted",
         createId: quote.createId,

@@ -246,7 +246,7 @@ export async function pantaProxy<T>(path: string, body?: unknown): Promise<T> {
 // ---- Positions ----
 
 export function fetchPositions(wallet: string) {
-  return jsonFetch<{ wallet: string; positions: import("./types").PositionItem[] }>(
+  return jsonFetch<{ wallet: string; positions: import("./types").PositionItem[]; note?: string | null }>(
     `/api/panta/positions?wallet=${encodeURIComponent(wallet)}`
   );
 }

@@ -33,6 +33,8 @@ export interface MarketListRow {
 }
 
 export interface MarketDetail extends MarketListRow {
+  /** Detail-only field (verified live 2026-09-27) — real question text, even when title is "". */
+  question?: string;
   creatorAddress?: string;
   oracle?: string;
   volumeUsdcBase?: string;
@@ -45,6 +47,13 @@ export interface MarketDetail extends MarketListRow {
   isResolved?: boolean;
   isGraduated?: boolean;
   creationFee?: number;
+  /**
+   * Complete detail cards carry this flag; stripped cards omit it entirely
+   * (third-party audit 2026-09-27: 13 of 100 catalogue markets are listed as
+   * tradeable but have NO Solana account — Panta's own UI says "Market not
+   * found on-chain"). Absent = unknown; false = explicitly not on-chain.
+   */
+  onChain?: boolean;
 }
 
 export interface MarketTradesResponse {

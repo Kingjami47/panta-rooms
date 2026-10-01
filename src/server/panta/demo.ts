@@ -50,8 +50,12 @@ const SEEDS: DemoSeed[] = [
   { id: "demo-worldcup", title: "Will the host nation reach the semifinals of the next tournament?", category: "sports", yesCents: 47, volume: "18,223", daysToEnd: 120, phase: "primary" },
   { id: "demo-gpt-release", title: "Will a new frontier model top the main benchmark before December?", category: "other", yesCents: 66, volume: "9,508", daysToEnd: 70, phase: "primary" },
   { id: "demo-climate", title: "Will global average temperature set a new record this year?", category: "world", yesCents: 52, volume: "5,610", daysToEnd: 100, phase: "primary" },
+  { id: "demo-summit", title: "Will the next global summit adopt a binding emissions target?", category: "world", yesCents: 28, volume: "11,372", daysToEnd: 55, phase: "primary" },
   { id: "demo-resolved-1", title: "Did the central bank hold rates at the last meeting?", category: "finance", yesCents: 0, volume: "44,120", daysToEnd: -3, phase: "resolved", outcome: "yes" },
   { id: "demo-resolved-2", title: "Did the featured fighter win the main event by knockout?", category: "sports", yesCents: 0, volume: "27,930", daysToEnd: -7, phase: "resolved", outcome: "no" },
+  { id: "demo-resolved-3", title: "Did total crypto market cap close above $3 trillion last quarter?", category: "crypto", yesCents: 0, volume: "61,405", daysToEnd: -5, phase: "resolved", outcome: "yes" },
+  { id: "demo-resolved-4", title: "Did the incumbent party win the national election?", category: "politics", yesCents: 0, volume: "88,240", daysToEnd: -12, phase: "resolved", outcome: "no" },
+  { id: "demo-resolved-5", title: "Did the sequel outsell the original's opening weekend?", category: "entertainment", yesCents: 0, volume: "19,860", daysToEnd: -9, phase: "resolved", outcome: "yes" },
 ];
 
 export function demoCards(category?: string): CardView[] {
@@ -59,7 +63,7 @@ export function demoCards(category?: string): CardView[] {
   let cards = SEEDS.map((s): CardView => ({
     marketId: s.id,
     title: s.title,
-    description: "Sample market shown in DEMO MODE. Connect Panta credentials to browse the live catalog.",
+    description: "Sample market in DEMO MODE — nothing here is real. Switch the environment to Live to browse Panta's actual catalog.",
     category: s.category,
     phase: s.phase,
     resolved: s.phase === "resolved",

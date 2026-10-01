@@ -542,8 +542,19 @@ export function RoomView() {
                 <p className="mt-1 text-[13px] leading-relaxed text-zinc-300">{m.resolutionRule}</p>
               </div>
             )}
+            {m.onChain === false && (
+              <div className="mt-4 rounded-lg border border-orange-400/25 bg-orange-400/[0.06] p-3.5">
+                <p className="text-[12px] leading-relaxed text-orange-200/90">
+                  <span className="font-semibold">Not on-chain:</span> Panta lists this market, but it has no Solana
+                  account — it can be discussed here, not traded. (Known upstream catalog issue; about 13 of every 100
+                  Panta listings.)
+                </p>
+              </div>
+            )}
             <div className="mt-5 flex flex-wrap items-center gap-x-6 gap-y-2 text-[12.5px] text-zinc-500">
-              {m.volumeUsdc && <span>{m.volumeUsdc} USDC volume</span>}
+              {/* Panta's volume fields come and go between calls (audit 2026-09-27) —
+                  render a number only when one actually arrived. */}
+              {Number(m.volumeUsdc) > 0 && <span>{m.volumeUsdc} USDC volume</span>}
               {m.creatorAddress && <span className="font-mono">creator {shortWallet(m.creatorAddress)}</span>}
               <span className="inline-flex items-center gap-1.5">
                 <MessageSquare className="size-3.5" /> {data.room?.commentCount ?? 0}
