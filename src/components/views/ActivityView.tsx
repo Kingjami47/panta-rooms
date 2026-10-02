@@ -18,7 +18,7 @@ import { fetchMarketDetail, fetchPositions, pantaProxy, ApiError } from "@/lib/a
 import { broadcast, instructionsToVersionedTx, walletErrorCode } from "@/lib/solana-client";
 import { useAppStore } from "@/store/app-store";
 import type { WinClaimBuildResponse } from "@/server/panta/types";
-import { DemoBanner, NoticeBanner, PreviewWalletNotice, SectionTitle, Spinner } from "@/components/shared/ui-bits";
+import { DemoBanner, NoticeBanner, SectionTitle, Spinner } from "@/components/shared/ui-bits";
 import type { PositionItem } from "@/lib/types";
 
 function PositionCard({ p, onClaim, claiming }: { p: PositionItem; onClaim?: () => void; claiming?: boolean }) {
@@ -151,10 +151,6 @@ export function ActivityView() {
               <NoticeBanner text={claimMsg.text} tone={claimMsg.ok ? "info" : "error"} />
             </div>
           )}
-
-          <div className="mt-6">
-            <PreviewWalletNotice />
-          </div>
 
           <div className="mt-8">
             <div className="mb-4 flex items-center justify-between">

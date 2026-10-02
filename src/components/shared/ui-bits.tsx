@@ -1,8 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { AlertTriangle, Info, Loader2, ShieldAlert } from "lucide-react";
-import { PREVIEW_WALLET_NOTICE, isPreviewHost } from "@/lib/env-hints";
+import { AlertTriangle, Info, Loader2 } from "lucide-react";
 import { categoryLabel } from "@/lib/panta-categories";
 
 export function DemoBanner({ note }: { note?: string | null }) {
@@ -32,23 +31,6 @@ export function NoticeBanner({ text, tone = "info" }: { text: string; tone?: "in
     >
       {tone === "error" ? <AlertTriangle className="mt-0.5 size-4 shrink-0" /> : <Info className="mt-0.5 size-4 shrink-0" />}
       <span>{text}</span>
-    </div>
-  );
-}
-
-/**
- * Amber hint shown ONLY on preview/sandbox hosts (e.g. preview-*.space-z.ai),
- * where Phantom may show its "Request blocked" screen for signing requests.
- * Hidden on localhost and production domains — SSR-safe (renders after mount).
- */
-export function PreviewWalletNotice() {
-  // Client-only app shell (ssr:false): safe to read the host in the initializer.
-  const [show] = useState(() => isPreviewHost());
-  if (!show) return null;
-  return (
-    <div className="flex items-start gap-2.5 rounded-xl border border-amber-400/25 bg-amber-400/[0.07] px-4 py-3 text-[13px] leading-relaxed text-amber-200/90">
-      <ShieldAlert className="mt-0.5 size-4 shrink-0 text-amber-300" />
-      <span>{PREVIEW_WALLET_NOTICE}</span>
     </div>
   );
 }

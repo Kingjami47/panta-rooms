@@ -28,7 +28,7 @@ import { categoryTabs, normalizeCategory } from "@/lib/panta-categories";
 import { FundsHint } from "@/components/wallet/funding-center";
 import type { AIProposal, CreateStepState } from "@/lib/types";
 import type { CreateQuoteResponse, CreateBuildResponse, CreateRegisterResponse } from "@/server/panta/types";
-import { NoticeBanner, PreviewWalletNotice, Spinner } from "@/components/shared/ui-bits";
+import { NoticeBanner, Spinner } from "@/components/shared/ui-bits";
 
 /**
  * Local category covers — used ONLY for demo rooms (stored/displayed by us,
@@ -530,7 +530,6 @@ export function CreateWizard() {
               )}
               {!demoMode && connected && (
                 <div className="mb-4 space-y-2.5">
-                  <PreviewWalletNotice />
                   <FundsHint note={`Live mode — Panta will quote the real creation fee (${CREATE_FEE_USDC} USDC at current on-chain config).`} />
                   <PreflightCard p={preflight} />
                 </div>

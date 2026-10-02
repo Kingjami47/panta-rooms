@@ -49,9 +49,6 @@ export function isPreviewHost(): boolean {
  * Messages for the Phantom "Request blocked" scenario on preview hosts.
  * Honest + actionable (spec §19 tone): what happened, what to do, why it is safe here.
  */
-export const PREVIEW_WALLET_NOTICE =
-  'Preview link: wallets like Phantom show a "Request blocked" warning on preview domains they don\u2019t know yet. If the popup appears, choose "Proceed anyway (unsafe)" to continue \u2014 this is your own app on a preview link, and your wallet only ever signs this app\u2019s own transaction.';
-
 export const WALLET_BLOCKED_MESSAGE =
   'Phantom blocked or declined the signing popup \u2014 this happens on preview/sandbox domains. In the Phantom popup choose "Proceed anyway (unsafe)", then try again. If you declined it yourself, nothing was sent \u2014 no transaction left your wallet.';
 

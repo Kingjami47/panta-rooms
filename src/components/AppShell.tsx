@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import { useAppStore } from "@/store/app-store";
 import { WalletConnectButton } from "@/components/Providers";
-import { EnvironmentBanner, EnvironmentChip } from "@/components/wallet/funding-center";
+import { EnvironmentChip } from "@/components/wallet/funding-center";
 import { LandingView } from "@/components/views/LandingView";
 import { DiscoverView } from "@/components/views/DiscoverView";
 import { RoomView } from "@/components/views/RoomView";
@@ -73,7 +73,10 @@ export function AppShell() {
         </div>
       </header>
 
-      <EnvironmentBanner />
+      {/* EnvironmentBanner removed (user request 2026-10-02): the persistent
+          MAINNET strip sat above every page and could not be dismissed. The
+          header chip (LIVE · MAINNET / DEMO / SANDBOX) still announces the
+          active environment on every screen. */}
 
       <main className="flex-1">
         {view === "landing" && <LandingView />}

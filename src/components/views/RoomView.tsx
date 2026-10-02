@@ -29,7 +29,6 @@ import {
   NoticeBanner,
   PhasePill,
   PriceBar,
-  PreviewWalletNotice,
   SectionTitle,
   Spinner,
   timeAgo,
@@ -182,7 +181,6 @@ function TradePanel({ marketId, demoMode, open }: { marketId: string; demoMode: 
       <p className="text-[13px] text-zinc-400">Take a position</p>
       {!demoMode && (
         <div className="mt-3 space-y-2.5">
-          <PreviewWalletNotice />
           {connected ? (
             <FundsHint note="Live mode — trades use real USDC." />
           ) : (
