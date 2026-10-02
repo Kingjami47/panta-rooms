@@ -3,6 +3,7 @@ import { resolveMode, pantaEnvFor } from "@/server/request-mode";
 import { getCategories } from "@/server/panta/discovery";
 import { demoCards } from "@/server/panta/demo";
 import { describeEnvironment, USDC_MINT_DEFAULT } from "@/lib/environment";
+import { PANTA_CATEGORIES } from "@/lib/panta-categories";
 
 export const dynamic = "force-dynamic";
 
@@ -23,17 +24,22 @@ export const dynamic = "force-dynamic";
 export async function GET(req: NextRequest) {
   const resolved = resolveMode(req);
   let mode = resolved.mode;
-  let categories: string[] = [];
+  // Panta's GET /categories/ returns slugs that match ZERO real market rows
+  // (verified 2026-10-02: their directory says "entertainment/finance/science"
+  // while actual markets carry "pop-culture/stocks/space-universe" etc.) —
+  // trusting it renders permanently-empty tabs. Serve the verified catalog
+  // slugs instead; see src/lib/panta-categories.ts.
+  let categories: string[] = [...PANTA_CATEGORIES];
 
   if (mode !== "demo") {
     try {
-      categories = await getCategories(pantaEnvFor(mode));
+      await getCategories(pantaEnvFor(mode));
     } catch {
       // Panta unreachable → honest fallback: clearly-labeled demo data.
       mode = "demo";
     }
   }
-  if (categories.length === 0) {
+  if (mode === "demo") {
     categories = Array.from(new Set(demoCards().map((c) => c.category)));
   }
 

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import ZAI from "z-ai-web-dev-sdk";
+import { PANTA_CATEGORIES, normalizeCategory } from "@/lib/panta-categories";
 
 export const dynamic = "force-dynamic";
 
@@ -10,7 +11,9 @@ export const dynamic = "force-dynamic";
  * gives betting advice, or recommends trades. It structures + flags ambiguity.
  */
 
-const VALID_CATEGORIES = ["sports", "crypto", "politics", "entertainment", "finance", "science", "world", "other"];
+// Panta's real catalog slugs (verified 2026-10-02 — their /categories/
+// directory lists phantom slugs that match zero market rows).
+const VALID_CATEGORIES: string[] = [...PANTA_CATEGORIES];
 
 interface StructureResult {
   ok: boolean;
@@ -35,7 +38,7 @@ Rules:
 1. The question must be objectively measurable by a defined public source (e.g. "CoinGecko daily BTC close in UTC", "official match result on the league website").
 2. If the user's question is subjective, vague, or unmeasurable (e.g. "Will Arsenal have a good season?"), set measurable=false, explain why in ambiguityNote, and propose a clarified measurable alternative in clarifiedQuestion.
 3. resolutionRule must state EXACTLY what happens YES vs NO, reference the named source, and include the cutoff time in UTC.
-4. category must be one of: sports, crypto, politics, entertainment, finance, science, world, other.
+4. category must be one of: ${VALID_CATEGORIES.join(", ")}.
 5. sourcesOfTruth: 1-3 public URLs or unambiguous source names (e.g. "https://www.coingecko.com", "BBC Sport results page").
 6. suggestedDays: sensible time window until resolution (2-120 days).
 7. Keep the user's intent — do not change what is being asked, only make it measurable.
@@ -94,7 +97,9 @@ export async function POST(req: NextRequest) {
       question: String(parsed.question || input).slice(0, 512),
       title: String(parsed.title || parsed.question || input).slice(0, 80),
       description: String(parsed.description || "").slice(0, 500),
-      category: VALID_CATEGORIES.includes(parsed.category ?? "") ? parsed.category! : "other",
+      category: VALID_CATEGORIES.includes(normalizeCategory(parsed.category ?? ""))
+        ? normalizeCategory(parsed.category ?? "") // AI may still emit legacy slugs
+        : "other",
       resolutionRule: String(parsed.resolutionRule || "").slice(0, 2048),
       sourcesOfTruth: Array.isArray(parsed.sourcesOfTruth)
         ? parsed.sourcesOfTruth.filter((s) => typeof s === "string").slice(0, 3)

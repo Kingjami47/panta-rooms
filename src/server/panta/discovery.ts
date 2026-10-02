@@ -3,6 +3,7 @@ import { pantaCall, activeEnv, type PantaEnv } from "./client";
 import type { CategoriesResponse, MarketListRow } from "./types";
 import { toCardView, isStrippedCard, type CardView } from "./normalize";
 import { getMarket } from "./markets";
+import { loadMarketMeta, persistMarketMeta } from "./meta";
 
 export interface ListParams {
   category?: string;
@@ -60,6 +61,14 @@ export async function listMarketsRaw(
  * re-rolls stripped answers within the same call (stripRetries, deadline-
  * bounded), so a thin cache entry means every replica dice-roll failed, not
  * just one; it is cached briefly (thin cache) and retried on a later pass.
+ *
+ * Cross-instance memory (2026-10-02): the caches below are per-process, and
+ * on Vercel every cold start / concurrent instance began from zero — users
+ * kept seeing fallback cards for markets another instance had already
+ * learned. Every complete read is now persisted to the shared MarketMeta
+ * table (src/server/panta/meta.ts), and each page is SEEDED from it before
+ * any upstream read is spent. A title learned once is served everywhere,
+ * instantly, and can never regress (stripped reads are never persisted).
  */
 const detailCache = new Map<string, { at: number; card: CardView; ttl: number }>();
 const failCache = new Map<string, { at: number }>();
@@ -144,13 +153,14 @@ async function enrichCards(cards: CardView[], env: PantaEnv): Promise<CardView[]
     if (fail && Date.now() - fail.at < FAIL_TTL) return null;
     await sleep(Math.random() * JITTER_MS);
     try {
-      const card = await getMarket(c.marketId, env, { stripRetries: 2, deadline: passDeadline });
+      const card = await getMarket(c.marketId, env, { stripRetries: 3, deadline: passDeadline });
       // Complete answer (real question text) → full TTL. A detail that still
       // carries only the id-label fallback means a stripped card — cache it
       // briefly so a later read can upgrade to the complete shape.
       const thin = needsEnrichment(card);
       detailCache.set(c.marketId, { at: Date.now(), card, ttl: thin ? THIN_TTL : DETAIL_TTL });
       failCache.delete(c.marketId);
+      if (!thin) await persistMarketMeta(card); // teach every other instance
       return card;
     } catch {
       // Negative cache — never re-hit a failing market on every page load.
@@ -184,10 +194,32 @@ async function enrichCards(cards: CardView[], env: PantaEnv): Promise<CardView[]
 export async function listMarkets(params: ListParams = {}, env: PantaEnv = activeEnv()): Promise<DiscoveryPage> {
   const { items, nextCursor } = await listMarketsRaw(params, env);
   const base = items.map(toCardView);
+  // Seed from the shared MarketMeta table FIRST — one indexed query (~20ms)
+  // restores titles learned by any instance, so cold starts serve real
+  // questions before a single upstream detail read is spent. Only stripped
+  // cards are upgraded; a complete live title is always fresher than the
+  // stored one.
+  let known: Map<string, { title: string; description: string | null; imageUrl: string | null }> = new Map();
+  try {
+    known = await loadMarketMeta(base.map((c) => c.marketId));
+  } catch {
+    /* unreachable — loadMarketMeta never throws; kept for safety */
+  }
+  const seeded = base.map((c) => {
+    if (!isStrippedCard(c)) return c;
+    const k = known.get(c.marketId);
+    if (!k || isStrippedCard({ title: k.title })) return c;
+    return {
+      ...c,
+      title: k.title,
+      description: k.description ?? c.description,
+      image: k.imageUrl ?? c.image,
+    };
+  });
   // Race enrichment against a hard budget. enrichCards never rejects (detail
   // failures are caught + negatively cached), so the loser is simply abandoned;
   // whatever finished in time is already in detailCache for the next request.
-  const cards = await Promise.race([enrichCards(base, env), sleep(ENRICH_BUDGET_MS).then(() => base)]);
+  const cards = await Promise.race([enrichCards(seeded, env), sleep(ENRICH_BUDGET_MS).then(() => seeded)]);
   return { items: cards, nextCursor };
 }
 

@@ -87,16 +87,27 @@ export async function GET(req: NextRequest) {
       // visible "Resolved" tab showed nothing). Emulate the filter instead:
       // fetch without the status param and keep resolved cards server-side.
       const emulateResolved = phase === "resolved";
+      // Verified 2026-10-02: Panta's ?category= filter only resolves its OLD
+      // directory slugs (sports, crypto, politics, world). Row-level categories
+      // that exist in the live catalog — stocks, pop-culture, commodities,
+      // macroeconomics, space-universe — match ZERO rows even when filtered by
+      // their exact slug, and the phantom directory slugs (entertainment,
+      // finance, science, other) match nothing either. Emulate those locally:
+      // fetch the unfiltered catalog and keep matching rows server-side.
+      const UPSTREAM_CATEGORY_FILTER_OK = new Set(["sports", "crypto", "politics", "world"]);
+      const emulateCategory = typeof category === "string" && !UPSTREAM_CATEGORY_FILTER_OK.has(category);
+      const fetchUnfiltered = emulateResolved || emulateCategory;
       const page = await listMarkets(
         {
-          category,
+          category: emulateCategory ? undefined : category,
           status: emulateResolved ? undefined : phase,
           cursor,
-          limit: emulateResolved ? Math.min(limit * 2, 50) : limit,
+          limit: fetchUnfiltered ? Math.min(limit * 2, 50) : limit,
         },
         pantaEnvFor(mode)
       );
-      const feedItems = emulateResolved ? page.items.filter((c) => c.resolved) : page.items;
+      let feedItems = emulateResolved ? page.items.filter((c) => c.resolved) : page.items;
+      if (emulateCategory && category) feedItems = feedItems.filter((c) => c.category === category);
       // Audit (2026-09-27) defect #1: Panta's cursor pagination does not
       // advance — a page's own nextCursor can return identical rows and the
       // identical cursor forever. Detect that statelessly: if the upstream

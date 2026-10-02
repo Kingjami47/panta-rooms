@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { AlertTriangle, Info, Loader2, ShieldAlert } from "lucide-react";
 import { PREVIEW_WALLET_NOTICE, isPreviewHost } from "@/lib/env-hints";
+import { categoryLabel } from "@/lib/panta-categories";
 
 export function DemoBanner({ note }: { note?: string | null }) {
   return (
@@ -69,8 +70,10 @@ export function PhasePill({ phase, outcome }: { phase: string; outcome?: string 
 
 export function CategoryPill({ category }: { category: string }) {
   return (
-    <span className="inline-flex items-center rounded-full border border-white/10 bg-white/[0.05] px-2.5 py-0.5 text-[11px] font-medium capitalize text-zinc-300">
-      {category}
+    <span className="inline-flex items-center rounded-full border border-white/10 bg-white/[0.05] px-2.5 py-0.5 text-[11px] font-medium text-zinc-300">
+      {/* Panta's real slugs are hyphenated ("pop-culture") — show the friendly
+          label instead of a raw slug (verified 2026-10-02). */}
+      {categoryLabel(category)}
     </span>
   );
 }

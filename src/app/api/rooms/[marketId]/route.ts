@@ -5,6 +5,7 @@ import { PantaError, isPantaConfigured } from "@/server/panta/client";
 import { resolveMode, pantaEnvFor } from "@/server/request-mode";
 import { demoCard, demoTape } from "@/server/panta/demo";
 import { isStrippedCard, type CardView } from "@/server/panta/normalize";
+import { persistMarketMeta } from "@/server/panta/meta";
 
 export const dynamic = "force-dynamic";
 
@@ -61,6 +62,9 @@ export async function GET(req: NextRequest, ctx: { params: Promise<{ marketId: s
       // Shape-flip resilience: re-roll stripped detail answers (deadline keeps
       // the room open well inside serverless time limits).
       market = await getMarket(marketId, pantaEnv, { stripRetries: 2, deadline: Date.now() + 3_000 });
+      // Persist complete reads to the shared MarketMeta table so the discovery
+      // feed on EVERY instance can serve this title without re-rolling.
+      if (market) await persistMarketMeta(market);
       try {
         tape = await getMarketTrades(marketId, 20, pantaEnv);
       } catch (e) {

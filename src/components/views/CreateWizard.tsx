@@ -24,6 +24,7 @@ import { PreflightCard } from "@/components/trade/preflight-card";
 import { DemoScenarioPicker } from "@/components/trade/demo-scenario";
 import { useAppStore } from "@/store/app-store";
 import { CREATE_FEE_USDC } from "@/lib/environment";
+import { categoryTabs, normalizeCategory } from "@/lib/panta-categories";
 import { FundsHint } from "@/components/wallet/funding-center";
 import type { AIProposal, CreateStepState } from "@/lib/types";
 import type { CreateQuoteResponse, CreateBuildResponse, CreateRegisterResponse } from "@/server/panta/types";
@@ -49,10 +50,17 @@ const CATEGORY_COVER: Record<string, string> = {
   sports: "https://images.unsplash.com/photo-1461896836934-ffe607ba8211?w=1024&h=1024&fit=crop&q=80",
   crypto: "https://images.unsplash.com/photo-1518546305927-5a555bb7020d?w=1024&h=1024&fit=crop&q=80",
   politics: "https://images.unsplash.com/photo-1541872703-74c5e44368f9?w=1024&h=1024&fit=crop&q=80",
+  // Panta's real catalog slugs (verified 2026-10-02).
+  stocks: "https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=1024&h=1024&fit=crop&q=80",
+  commodities: "https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=1024&h=1024&fit=crop&q=80",
+  macroeconomics: "https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=1024&h=1024&fit=crop&q=80",
+  "pop-culture": "https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=1024&h=1024&fit=crop&q=80",
+  "space-universe": "https://images.unsplash.com/photo-1532094349884-543bc11b234d?w=1024&h=1024&fit=crop&q=80",
+  world: "https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=1024&h=1024&fit=crop&q=80",
+  // Legacy slugs kept for old demo rooms created before the catalog fix.
   entertainment: "https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=1024&h=1024&fit=crop&q=80",
   finance: "https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=1024&h=1024&fit=crop&q=80",
   science: "https://images.unsplash.com/photo-1532094349884-543bc11b234d?w=1024&h=1024&fit=crop&q=80",
-  world: "https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=1024&h=1024&fit=crop&q=80",
   other: "https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=1024&h=1024&fit=crop&q=80",
 };
 
@@ -168,7 +176,7 @@ export function CreateWizard() {
           marketId,
           title: proposal.title || proposal.question,
           description: proposal.description,
-          category: proposal.category,
+          category: normalizeCategory(proposal.category),
           imageUrl: LOCAL_COVER(proposal.category),
           creatorName: "Demo creator",
           creatorWallet: publicKey?.toBase58() ?? null,
@@ -195,7 +203,7 @@ export function CreateWizard() {
         question: proposal.question,
         resolutionRule: proposal.resolutionRule,
         sourcesOfTruth: proposal.sourcesOfTruth,
-        category: proposal.category,
+        category: normalizeCategory(proposal.category),
         startTime: times.start,
         endTime: times.end,
         resolutionTime: times.resolution,
@@ -281,7 +289,7 @@ export function CreateWizard() {
         marketId: reg.marketId,
         title: reg.title || proposal.title || proposal.question,
         description: proposal.description,
-        category: reg.category || proposal.category,
+        category: normalizeCategory(reg.category || proposal.category),
         imageUrl: reg.images?.[0] ?? coverUrl(proposal.category),
         creatorName: "You",
         creatorWallet: publicKey.toBase58(),
@@ -442,8 +450,8 @@ export function CreateWizard() {
                 onChange={(e) => setProposal({ ...proposal, category: e.target.value })}
                 className="mt-1.5 w-full rounded-xl border border-white/10 bg-black/25 px-4 py-2.5 text-[14px] text-zinc-200 focus:border-white/25 focus:outline-none"
               >
-                {["sports", "crypto", "politics", "entertainment", "finance", "science", "world", "other"].map((c) => (
-                  <option key={c} value={c} className="bg-zinc-900">{c}</option>
+                {categoryTabs().map((c) => (
+                  <option key={c.slug} value={c.slug} className="bg-zinc-900">{c.label}</option>
                 ))}
               </select>
             </div>

@@ -44,3 +44,19 @@ model Reaction {
   wallet    String
   @@unique([commentId, wallet, emoji])
 }
+
+// Learned market metadata (real question title, description, cover image).
+// Panta's list endpoint returns title:"" for most rows and its detail endpoint
+// flips between a complete and a stripped shape (audit 2026-09-27, re-verified
+// 2026-10-01), so titles must be re-rolled until a complete read succeeds.
+// In-memory caches are per-serverless-instance and die on cold starts/instance
+// churn — this shared table is what makes a learned title stick for ALL
+// instances. Rows are only ever written from COMPLETE reads (never fallback
+// labels), so a stored title cannot regress.
+model MarketMeta {
+  marketId    String   @id
+  title       String
+  description String?
+  imageUrl    String?
+  updatedAt   DateTime @updatedAt
+}

@@ -5,6 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Search } from "lucide-react";
 import { fetchDiscovery, fetchStatus } from "@/lib/api-client";
 import { useAppStore } from "@/store/app-store";
+import { categoryTabs } from "@/lib/panta-categories";
 import type { FeedCard } from "@/lib/types";
 import { CategoryPill, CardSkeleton, DemoBanner, EmptyState, NoticeBanner, PhasePill, PriceBar, daysLeft, timeAgo } from "@/components/shared/ui-bits";
 
@@ -69,9 +70,11 @@ export function DiscoverView() {
   }, [status]);
 
   const categories = useMemo(() => {
-    const base = status?.categories ?? ["sports", "crypto", "politics", "entertainment", "finance", "science", "world", "other"];
-    return ["all", ...base];
-  }, [status]);
+    // Verified Panta catalog slugs (2026-10-02). Panta's /categories/ endpoint
+    // lists slugs that match zero real markets — trusting it made the
+    // Entertainment/Finance/Science tabs permanently empty.
+    return [{ slug: "all", label: "All" }, ...categoryTabs()];
+  }, []);
 
   const filtered = useMemo(() => {
     if (!data?.items) return [];
@@ -102,15 +105,15 @@ export function DiscoverView() {
         <div className="flex flex-wrap items-center gap-1.5">
           {categories.map((c) => (
             <button
-              key={c}
-              onClick={() => setCategory(c)}
-              className={`rounded-full px-3.5 py-1.5 text-[13px] font-medium capitalize transition-colors ${
-                category === c
+              key={c.slug}
+              onClick={() => setCategory(c.slug)}
+              className={`rounded-full px-3.5 py-1.5 text-[13px] font-medium transition-colors ${
+                category === c.slug
                   ? "bg-white text-zinc-950"
                   : "border border-white/10 bg-white/[0.04] text-zinc-300 hover:bg-white/[0.08]"
               }`}
             >
-              {c === "all" ? "All" : c}
+              {c.label}
             </button>
           ))}
           <span className="mx-1 hidden h-5 w-px bg-white/10 sm:block" />
