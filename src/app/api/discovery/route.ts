@@ -97,16 +97,55 @@ export async function GET(req: NextRequest) {
       const UPSTREAM_CATEGORY_FILTER_OK = new Set(["sports", "crypto", "politics", "world"]);
       const emulateCategory = typeof category === "string" && !UPSTREAM_CATEGORY_FILTER_OK.has(category);
       const fetchUnfiltered = emulateResolved || emulateCategory;
-      const page = await listMarkets(
-        {
-          category: emulateCategory ? undefined : category,
-          status: emulateResolved ? undefined : phase,
-          cursor,
-          limit: fetchUnfiltered ? Math.min(limit * 2, 50) : limit,
-        },
-        pantaEnvFor(mode)
-      );
-      let feedItems = emulateResolved ? page.items.filter((c) => c.resolved) : page.items;
+      // Live verification 2026-10-02: the raw catalog reshuffles its slice on
+      // every read (audit 2026-09-27) and rare categories (stocks ≈ 5 of ~50
+      // rows) vanish from small pools — a request-scaled pool (limit*2) made
+      // this worse (limit=4 → 8-row roll → empty tab, cached for TTL). Emulated
+      // filters therefore always read a fixed 50-row pool, and the FIRST page
+      // rolls it a second time in parallel, merging by marketId, so every tab
+      // fills regardless of the requested page size. Cursor pages skip the
+      // extra roll: upstream cursors are unreliable (audit defect #1) and a
+      // cursorless re-roll would duplicate rows already shown on page 1.
+      const env = pantaEnvFor(mode);
+      const POOL = 50;
+      const [page, second] = await Promise.all([
+        listMarkets(
+          {
+            category: emulateCategory ? undefined : category,
+            status: emulateResolved ? undefined : phase,
+            cursor,
+            limit: fetchUnfiltered ? POOL : limit,
+          },
+          env
+        ),
+        fetchUnfiltered && !cursor ? listMarkets({ limit: POOL }, env).catch(() => null) : Promise.resolve(null),
+      ]);
+      let pool = page.items;
+      if (second) {
+        const seen = new Set(pool.map((c) => c.marketId));
+        for (const c of second.items) {
+          if (!seen.has(c.marketId)) {
+            seen.add(c.marketId);
+            pool.push(c);
+          }
+        }
+      }
+      // Upstream occasionally serves 200 with an EMPTY slice (verified live
+      // 2026-10-02: bare ?limit=24 returned 0 rows on two separate rolls, then
+      // filled on a re-roll with no code change). One empty roll must not be
+      // cached for the full TTL — re-roll once before accepting the page.
+      if (!cursor && pool.length === 0) {
+        const retry = await listMarkets(
+          {
+            category: emulateCategory ? undefined : category,
+            status: emulateResolved ? undefined : phase,
+            limit: fetchUnfiltered ? POOL : limit,
+          },
+          env
+        ).catch(() => null);
+        if (retry && retry.items.length > 0) pool = retry.items;
+      }
+      let feedItems = emulateResolved ? pool.filter((c) => c.resolved) : pool;
       if (emulateCategory && category) feedItems = feedItems.filter((c) => c.category === category);
       // Audit (2026-09-27) defect #1: Panta's cursor pagination does not
       // advance — a page's own nextCursor can return identical rows and the

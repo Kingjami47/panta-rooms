@@ -79,3 +79,4 @@ server.log
 /scripts/shots/
 /.zscripts/
 .vstate
+worklog.md
