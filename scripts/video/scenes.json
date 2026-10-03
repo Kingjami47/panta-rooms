@@ -1,0 +1,67 @@
+{
+  "voice": "jam",
+  "speed": 1.0,
+  "scenes": [
+    {
+      "id": "s1",
+      "type": "card",
+      "narration": "Welcome to Panta Rooms — the social way to call what happens next.",
+      "caption": "Welcome to Panta Rooms — the social way to call what happens next."
+    },
+    {
+      "id": "s2",
+      "type": "browser",
+      "startUrl": "https://panta-rooms.vercel.app/",
+      "narration": "This is Panta Rooms — a social layer on top of Panta's prediction markets. Every card is a real question people are trading on right now. Browsing is free. And when you're ready to trade with real USDC, you connect your wallet right up here.",
+      "caption": "Browsing is free. Connect your Solana wallet (top right) when you're ready to trade real USDC."
+    },
+    {
+      "id": "s3",
+      "type": "browser",
+      "startUrl": "https://panta-rooms.vercel.app/#discover",
+      "narration": "In Explore, markets are sorted into ten categories — sports, crypto, politics, and more. Filter by open or resolved, or search for anything. Prices move with real trading, so the crowd's opinion is always on the card.",
+      "caption": "Ten categories. Open/resolved filters. Prices move with real trading."
+    },
+    {
+      "id": "s4",
+      "type": "browser",
+      "startUrl": "https://panta-rooms.vercel.app/#discover",
+      "narration": "Open any market to enter its Room — part market, part conversation. Scroll down to the discussion, type your take, and post it. You can comment as a guest, no wallet needed. Your comment appears instantly, and sorting and reactions keep the conversation tidy.",
+      "caption": "Every Room has a discussion. Post as a guest — no wallet needed."
+    },
+    {
+      "id": "s5",
+      "type": "browser",
+      "startUrl": "https://panta-rooms.vercel.app/#room/",
+      "narration": "Every take counts. The Community tab ranks the most-discussed rooms and the loudest voices — this week, or all time. Post takes in any market to climb the board.",
+      "caption": "The Community board ranks the most-discussed Rooms and the loudest voices."
+    },
+    {
+      "id": "s6",
+      "type": "browser",
+      "startUrl": "https://panta-rooms.vercel.app/#community",
+      "narration": "Not ready to spend? One click. Open the environment chip and switch to Demo mode — sample data, clearly labeled, and the full experience with zero setup.",
+      "caption": "Switch to Demo mode: the full experience with zero setup."
+    },
+    {
+      "id": "s7",
+      "type": "browser",
+      "startUrl": "https://panta-rooms.vercel.app/#create",
+      "narration": "Let's create a Room. Type any question, and the AI structures it into a proper prediction market. Review the details, tweak the description, pick a category, then create. In demo mode it's instant and free.",
+      "caption": "Type any question — AI structures it into a market. Free in demo."
+    },
+    {
+      "id": "s8",
+      "type": "browser",
+      "startUrl": "https://panta-rooms.vercel.app/#room/",
+      "narration": "Now make the call. Pick YES or NO, choose your amount, get a live quote, and confirm. In demo you're trading sample funds — but the mechanics are exactly what you'd use on mainnet.",
+      "caption": "Pick a side, get a quote, confirm. Same mechanics as mainnet."
+    },
+    {
+      "id": "s9",
+      "type": "card",
+      "narration": "And that's the whole loop. Explore, discuss, predict, and climb the board. Panta Rooms — every question can become a market. The link is right below this video.",
+      "caption": "Explore. Discuss. Predict. panta-rooms.vercel.app"
+    }
+  ]
+}
