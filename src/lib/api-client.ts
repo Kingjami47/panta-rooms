@@ -219,6 +219,14 @@ export function fetchMyRooms(wallet?: string | null) {
   return jsonFetch<{ rooms: (import("./types").RoomInfo & { _count?: { comments: number } })[] }>(`/api/rooms${q}`);
 }
 
+// ---- Community leaderboard ----
+
+export type CommunityWindow = "week" | "all";
+
+export function fetchCommunity(window: CommunityWindow, signal?: AbortSignal) {
+  return jsonFetch<import("./types").CommunityBoard>(`/api/community?window=${window}`, { signal });
+}
+
 // ---- AI structuring ----
 
 export function structureQuestion(question: string) {

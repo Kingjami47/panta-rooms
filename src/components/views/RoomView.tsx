@@ -4,12 +4,14 @@ import { useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useWallet } from "@solana/wallet-adapter-react";
 import {
+  ArrowDownUp,
   ArrowLeft,
   Check,
   Copy,
   Link2,
   Loader2,
   MessageSquare,
+  MessagesSquare,
   Send,
   Share2,
 } from "lucide-react";
@@ -281,6 +283,7 @@ function Discussion({ marketId, demoMode }: { marketId: string; demoMode: boolea
   const [text, setText] = useState("");
   const [posting, setPosting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [sort, setSort] = useState<"new" | "old">("new");
 
   const { data } = useQuery({
     queryKey: ["comments", marketId],
@@ -295,12 +298,37 @@ function Discussion({ marketId, demoMode }: { marketId: string; demoMode: boolea
     if (!t || posting) return;
     setPosting(true);
     setError(null);
+    // Optimistic insert: the comment appears instantly as a pending row, then
+    // gets replaced by the server row (rollback on failure).
+    const tempId = `temp:${Date.now()}`;
+    const wallet = publicKey?.toBase58() ?? null;
+    const optimistic: CommentRow = {
+      id: tempId,
+      displayName: wallet ? shortWallet(wallet) : "Guest",
+      wallet,
+      body: t,
+      createdAt: new Date().toISOString(),
+      reactions: {},
+    };
+    qc.setQueryData<{ comments: CommentRow[] }>(["comments", marketId], (old) => ({
+      comments: [optimistic, ...(old?.comments ?? [])],
+    }));
+    setText("");
     try {
-      await postComment(marketId, t, publicKey?.toBase58() ?? null);
-      setText("");
-      await qc.invalidateQueries({ queryKey: ["comments", marketId] });
-      await qc.invalidateQueries({ queryKey: ["room", marketId] });
+      const res = await postComment(marketId, t, wallet);
+      qc.setQueryData<{ comments: CommentRow[] }>(["comments", marketId], (old) => ({
+        comments: [
+          res.comment,
+          ...(old?.comments ?? []).filter((c) => c.id !== tempId && c.id !== res.comment.id),
+        ],
+      }));
+      void qc.invalidateQueries({ queryKey: ["comments", marketId] });
+      void qc.invalidateQueries({ queryKey: ["room", marketId] });
     } catch (e) {
+      // Rollback the optimistic row.
+      qc.setQueryData<{ comments: CommentRow[] }>(["comments", marketId], (old) => ({
+        comments: (old?.comments ?? []).filter((c) => c.id !== tempId),
+      }));
       setError(e instanceof ApiError ? e.friendly : "Could not post the comment.");
     } finally {
       setPosting(false);
@@ -308,6 +336,7 @@ function Discussion({ marketId, demoMode }: { marketId: string; demoMode: boolea
   };
 
   const react = async (commentId: string, emoji: string) => {
+    if (commentId.startsWith("temp:")) return;
     try {
       await toggleReaction(marketId, commentId, emoji, voter);
       await qc.invalidateQueries({ queryKey: ["comments", marketId] });
@@ -317,6 +346,14 @@ function Discussion({ marketId, demoMode }: { marketId: string; demoMode: boolea
   };
 
   const comments: CommentRow[] = data?.comments ?? [];
+  const ordered = useMemo(
+    () =>
+      [...comments].sort((a, b) => {
+        const d = new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+        return sort === "new" ? -d : d;
+      }),
+    [comments, sort]
+  );
 
   return (
     <div>
@@ -326,34 +363,80 @@ function Discussion({ marketId, demoMode }: { marketId: string; demoMode: boolea
           {(publicKey ? shortWallet(publicKey.toBase58()).slice(0, 2) : "G").toUpperCase()}
         </div>
         <div className="flex-1">
-          <input
-            value={text}
-            onChange={(e) => setText(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && submit()}
-            placeholder={demoMode ? "Share your take (demo room)…" : "Share your take on this prediction…"}
-            maxLength={500}
-            className="w-full rounded-xl border border-white/10 bg-white/[0.04] px-4 py-2.5 text-[13.5px] text-zinc-200 placeholder:text-zinc-500 focus:border-white/20 focus:outline-none"
-          />
-          {error && <p className="mt-1.5 text-[12px] text-red-300">{error}</p>}
+          <div className="flex gap-2">
+            <input
+              value={text}
+              onChange={(e) => setText(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && submit()}
+              placeholder={demoMode ? "Share your take (demo room)…" : "Share your take on this prediction…"}
+              maxLength={500}
+              aria-label="Write a comment"
+              className="w-full rounded-xl border border-white/10 bg-white/[0.04] px-4 py-2.5 text-[13.5px] text-zinc-200 placeholder:text-zinc-500 focus:border-white/20 focus:outline-none"
+            />
+            <button
+              onClick={submit}
+              disabled={posting || !text.trim()}
+              className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-white text-zinc-950 transition hover:bg-zinc-200 disabled:opacity-40"
+              aria-label="Post comment"
+            >
+              {posting ? <Spinner /> : <Send className="size-4" />}
+            </button>
+          </div>
+          <div className="mt-1 flex min-h-[18px] items-center justify-between gap-2">
+            <div>{error && <p className="text-[12px] text-red-300">{error}</p>}</div>
+            {text.length > 380 && (
+              <p className={`ml-auto shrink-0 text-[11px] ${text.length >= 500 ? "text-amber-300" : "text-zinc-500"}`}>
+                {text.length}/500
+              </p>
+            )}
+          </div>
         </div>
-        <button
-          onClick={submit}
-          disabled={posting || !text.trim()}
-          className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-white text-zinc-950 transition hover:bg-zinc-200 disabled:opacity-40"
-          aria-label="Post comment"
-        >
-          {posting ? <Spinner /> : <Send className="size-4" />}
-        </button>
       </div>
 
-      <div className="mt-5 space-y-3">
-        {comments.length === 0 ? (
-          <p className="py-6 text-center text-[13px] text-zinc-500">
-            No comments yet — start the conversation.
-          </p>
+      {comments.length > 1 && (
+        <div className="mb-3 flex items-center gap-1" role="group" aria-label="Comment order">
+          <ArrowDownUp className="size-3.5 text-zinc-600" />
+          {(
+            [
+              { k: "new", l: "Newest" },
+              { k: "old", l: "Oldest" },
+            ] as const
+          ).map((s) => (
+            <button
+              key={s.k}
+              onClick={() => setSort(s.k)}
+              aria-pressed={sort === s.k}
+              className={`rounded-full px-2.5 py-1 text-[11.5px] font-medium transition-colors ${
+                sort === s.k
+                  ? "bg-white/[0.1] text-zinc-100"
+                  : "text-zinc-500 hover:bg-white/[0.05] hover:text-zinc-300"
+              }`}
+            >
+              {s.l}
+            </button>
+          ))}
+        </div>
+      )}
+
+      <div className="space-y-3">
+        {ordered.length === 0 ? (
+          <div className="flex flex-col items-center rounded-xl border border-white/[0.06] bg-white/[0.02] px-4 py-10 text-center">
+            <MessagesSquare className="size-6 text-zinc-600" />
+            <p className="mt-3 text-[13.5px] font-medium text-zinc-300">No comments yet</p>
+            <p className="mt-1 max-w-xs text-[12.5px] leading-relaxed text-zinc-500">
+              {demoMode
+                ? "Be the first voice in this demo room — takes are simulated and clearly labeled."
+                : "Be the first voice in this Room — your take shows up on the Community board."}
+            </p>
+          </div>
         ) : (
-          comments.map((c) => (
-            <div key={c.id} className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-4">
+          ordered.map((c) => (
+            <div
+              key={c.id}
+              className={`rounded-xl border p-4 ${
+                c.id.startsWith("temp:") ? "border-white/[0.04] bg-white/[0.01] opacity-60" : "border-white/[0.06] bg-white/[0.02]"
+              }`}
+            >
               <div className="flex items-center gap-2">
                 <div className="flex size-6 items-center justify-center rounded-full border border-white/10 bg-white/[0.06] text-[10px] font-bold text-zinc-300">
                   {c.displayName.slice(0, 2).toUpperCase()}

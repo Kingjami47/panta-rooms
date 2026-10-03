@@ -71,6 +71,33 @@ export interface CommentItem {
   reactions: Record<string, number>;
 }
 
+// ---- Community leaderboard ----
+
+export interface CommunityRoom {
+  marketId: string;
+  title: string;
+  category: string;
+  imageUrl: string | null;
+  demo: boolean;
+  creatorName: string;
+  /** comments in the selected window (all-time count for window=all) */
+  commentCount: number;
+  lastActivityAt: string | null;
+}
+
+export interface CommunityVoice {
+  displayName: string;
+  wallet: string | null;
+  commentCount: number;
+}
+
+export interface CommunityBoard {
+  window: "week" | "all";
+  topRooms: CommunityRoom[];
+  topVoices: CommunityVoice[];
+  totals: { rooms: number; comments: number };
+}
+
 export interface AppStatus {
   mode: "live" | "test" | "demo";
   categories: string[];

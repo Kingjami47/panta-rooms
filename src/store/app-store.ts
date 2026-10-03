@@ -3,7 +3,7 @@
 import { create } from "zustand";
 import type { AppStatus } from "@/lib/types";
 
-export type View = "landing" | "discover" | "room" | "create" | "activity" | "creator";
+export type View = "landing" | "discover" | "room" | "create" | "activity" | "creator" | "community";
 
 interface RouteState {
   view: View;
@@ -23,6 +23,8 @@ function parseHash(): RouteState {
       return { view: "create", marketId: null };
     case "activity":
       return { view: "activity", marketId: null };
+    case "community":
+      return { view: "community", marketId: null };
     case "creator":
       return { view: "creator", marketId: null };
     default:

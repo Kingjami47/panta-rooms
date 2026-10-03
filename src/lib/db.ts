@@ -97,6 +97,13 @@ const SCHEMA_DDL = [
    )`,
   `CREATE UNIQUE INDEX IF NOT EXISTS "Reaction_commentId_wallet_emoji_key"
      ON "Reaction"("commentId", "wallet", "emoji")`,
+  `CREATE TABLE IF NOT EXISTS "MarketMeta" (
+     "marketId" TEXT NOT NULL PRIMARY KEY,
+     "title" TEXT NOT NULL,
+     "description" TEXT,
+     "imageUrl" TEXT,
+     "updatedAt" DATETIME NOT NULL
+   )`,
 ]
 
 const globalForSchema = globalThis as unknown as {

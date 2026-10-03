@@ -6,6 +6,7 @@ import { WalletConnectButton } from "@/components/Providers";
 import { EnvironmentChip } from "@/components/wallet/funding-center";
 import { LandingView } from "@/components/views/LandingView";
 import { DiscoverView } from "@/components/views/DiscoverView";
+import { CommunityView } from "@/components/views/CommunityView";
 import { RoomView } from "@/components/views/RoomView";
 import { CreateWizard } from "@/components/views/CreateWizard";
 import { ActivityView } from "@/components/views/ActivityView";
@@ -45,6 +46,7 @@ export function AppShell() {
             <nav className="hidden items-center gap-1 md:flex" aria-label="Primary">
               {[
                 { key: "discover", label: "Explore" },
+                { key: "community", label: "Community" },
                 { key: "activity", label: "My Activity" },
                 { key: "creator", label: "Creator" },
               ].map((item) => (
@@ -81,6 +83,7 @@ export function AppShell() {
       <main className="flex-1">
         {view === "landing" && <LandingView />}
         {view === "discover" && <DiscoverView />}
+        {view === "community" && <CommunityView />}
         {view === "room" && <RoomView />}
         {view === "create" && <CreateWizard />}
         {view === "activity" && <ActivityView />}
