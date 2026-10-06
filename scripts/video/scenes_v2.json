@@ -1,0 +1,64 @@
+{
+  "voice": "tongtong",
+  "speed": 1.0,
+  "scenes": [
+    {
+      "id": "n1",
+      "type": "card",
+      "narration": "Welcome to Panta Rooms — the social layer for prediction markets."
+    },
+    {
+      "id": "n2",
+      "type": "browser",
+      "src": "s2.webm",
+      "narration": "Browsing is free. Connect your Solana wallet at the top right whenever you're ready to trade with real USDC."
+    },
+    {
+      "id": "n3",
+      "type": "browser",
+      "record": true,
+      "narration": "In Explore, markets are organized into ten categories—like Sports, Crypto, and Politics. Filter by open or resolved markets, or search directly."
+    },
+    {
+      "id": "n4",
+      "type": "browser",
+      "src": "s3.webm",
+      "narration": "Connect natively with Phantom, Solflare, or MetaMask to manage your positions."
+    },
+    {
+      "id": "n5",
+      "type": "browser",
+      "src": "s4.webm",
+      "narration": "Click any market to enter its Room—part market, part conversation. Scroll down to post your take, react, or comment as a guest with no wallet required."
+    },
+    {
+      "id": "n6",
+      "type": "browser",
+      "src": "s5.webm",
+      "narration": "The Community tab ranks the most-discussed Rooms and loudest voices across the platform."
+    },
+    {
+      "id": "n7",
+      "type": "browser",
+      "src": "s6.webm",
+      "narration": "Want to test things out first? Switch to Demo Mode for a full sandbox experience with zero setup."
+    },
+    {
+      "id": "n8",
+      "type": "browser",
+      "record": true,
+      "narration": "To create a Room, type any question. AI structures it into a market, sets resolution rules, and gets it ready to launch."
+    },
+    {
+      "id": "n9",
+      "type": "browser",
+      "record": true,
+      "narration": "Pick YES or NO, enter your amount, get a live quote, and confirm. The mechanics match live mainnet trading."
+    },
+    {
+      "id": "n10",
+      "type": "card",
+      "narration": "Explore, discuss, and predict. Visit panta-rooms.vercel.app to start."
+    }
+  ]
+}
