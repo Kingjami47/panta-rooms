@@ -31,7 +31,7 @@ export async function GET(req: NextRequest) {
         by: ["wallet", "displayName"],
         _count: { _all: true },
         where: commentWhere,
-        orderBy: { _count: { displayName: "desc" } },
+        orderBy: { _count: { displayName: "desc" } }, // displayName is never null → equals _all count
         take: BOARD_SIZE,
       }),
       db.room.count(),
@@ -73,7 +73,11 @@ export async function GET(req: NextRequest) {
         commentCount: windowCount.get(r.id) ?? 0,
         lastActivityAt: (lastAt.get(r.id) ?? null)?.toISOString() ?? null,
       }))
-      .sort((a, b) => b.commentCount - a.commentCount)
+      .sort(
+        (a, b) =>
+          b.commentCount - a.commentCount ||
+          (b.lastActivityAt ?? "").localeCompare(a.lastActivityAt ?? "") // tie → most recent activity
+      )
       .slice(0, BOARD_SIZE);
 
     return NextResponse.json({
@@ -86,7 +90,8 @@ export async function GET(req: NextRequest) {
       })),
       totals: { rooms: roomTotal, comments: commentTotal },
     });
-  } catch {
+  } catch (e) {
+    console.error("[community]", e instanceof Error ? e.message : e);
     return NextResponse.json({ code: "INTERNAL_ERROR", message: "Could not load the community board" }, { status: 500 });
   }
 }

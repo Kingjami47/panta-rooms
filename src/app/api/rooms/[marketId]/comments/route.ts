@@ -1,7 +1,27 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { allow, clientIp } from "@/lib/rate-limit";
 
 export const dynamic = "force-dynamic";
+
+const BASE58 = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
+
+/**
+ * Identity rule (audit 2026-10-08): the wallet is the identity. When a wallet
+ * is present (and well-formed), the server derives the display name from it —
+ * the client cannot paint a comment with someone else's name. Guests (no
+ * wallet) stay "Guest".
+ */
+function identityFor(body: { wallet?: unknown; displayName?: unknown }): {
+  wallet: string | null;
+  displayName: string;
+} {
+  const w = typeof body.wallet === "string" ? body.wallet.trim() : "";
+  if (w && BASE58.test(w) && w.length <= 44) {
+    return { wallet: w, displayName: shortWallet(w) };
+  }
+  return { wallet: null, displayName: "Guest" };
+}
 
 /** GET /api/rooms/[marketId]/comments — discussion thread for a Room. */
 export async function GET(_req: NextRequest, ctx: { params: Promise<{ marketId: string }> }) {
@@ -48,11 +68,22 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ marketId: 
       return NextResponse.json({ code: "ROOM_NOT_FOUND", message: "This room does not exist yet" }, { status: 404 });
     }
 
+    // Rate limit sits after validation: failed attempts don't burn quota,
+    // successful posts are damped to 10/min per IP per instance.
+    if (!allow(`comments:${clientIp(req)}`, 10, 60_000)) {
+      return NextResponse.json(
+        { code: "RATE_LIMITED", message: "Slow down a little — try again in a few seconds." },
+        { status: 429 }
+      );
+    }
+
+    const { wallet, displayName } = identityFor(body);
+
     const comment = await db.comment.create({
       data: {
         roomId: room.id,
-        wallet: body.wallet ?? null,
-        displayName: String(body.displayName || (body.wallet ? shortWallet(body.wallet) : "Guest")),
+        wallet,
+        displayName,
         body: text,
       },
     });

@@ -15,9 +15,12 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  // Canonical production origin — keeps OG/canonical URLs stable on the
-  // custom domain regardless of deployment URL (overridable via env).
-  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || "https://panterrooms.xyz"),
+  // Canonical production origin — keeps OG/canonical URLs stable regardless
+  // of deployment URL. MUST be a live, DNS-resolving domain: social crawlers
+  // (X/LinkedIn/Discord) fetch og:image relative to this base. Verified live:
+  // panta-rooms.vercel.app. (panterrooms.xyz does NOT resolve — do not use.)
+  // Overridable via NEXT_PUBLIC_APP_URL when a custom domain is wired.
+  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || "https://panta-rooms.vercel.app"),
   title: "Panta Rooms — Every question can become a market",
   description:
     "A social layer for prediction markets. Create prediction Rooms, bring your community into the conversation, and let people trade directly on the outcomes — powered by the Panta API on Solana.",
@@ -28,6 +31,13 @@ export const metadata: Metadata = {
     description: "A social layer for prediction markets, powered by Panta.",
     siteName: "Panta Rooms",
     type: "website",
+    images: [{ url: "/og.png", width: 1200, height: 630, alt: "Panta Rooms — PR monogram" }],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Panta Rooms — Every question can become a market",
+    description: "A social layer for prediction markets, powered by Panta.",
+    images: ["/og.png"],
   },
 };
 
