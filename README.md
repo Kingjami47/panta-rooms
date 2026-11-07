@@ -2,6 +2,12 @@
 
 **A social layer for prediction markets — built on the Panta API (Solana).**
 
+![Panta Rooms — the app](docs/app-hero.jpg)
+
+**[Live app →](https://panta-rooms.vercel.app)** · Built for [Colosseum's Crypto World's Fair](https://colosseum.com) — the largest hackathon in crypto history (2,973 submissions)
+
+![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178C6?logo=typescript&logoColor=white) ![Next.js 16](https://img.shields.io/badge/Next.js-16-000000?logo=next.js&logoColor=white) ![React 19](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=black) ![Tailwind CSS 4](https://img.shields.io/badge/Tailwind_CSS-4-06B6D4?logo=tailwindcss&logoColor=white) ![Prisma](https://img.shields.io/badge/Prisma-6-2D3748?logo=prisma&logoColor=white) ![e2e](https://img.shields.io/badge/e2e_tests-24%2F24_passing-2EA043)
+
 > Every question can become a market. Create prediction Rooms, bring your community into
 > the conversation, and let people trade directly on the outcomes.
 
